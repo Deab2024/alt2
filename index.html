@@ -66,9 +66,10 @@
   const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' +
     encodeURIComponent('https://visiteskilstuna.se/rest-api/rssService/getRssFeed?portletId=12.5b899160171ac5273c72ad9f&pageId=2.369be3c31580a19562d1977e');
 
-  const swedishMonths = {
-    "jan": "01", "feb": "02", "mar": "03", "apr": "04", "maj": "05", "jun": "06",
-    "jul": "07", "aug": "08", "sep": "09", "okt": "10", "nov": "11", "dec": "12"
+  const fullMonthNames = {
+    "jan": "januari", "feb": "februari", "mar": "mars", "apr": "april",
+    "maj": "maj", "jun": "juni", "jul": "juli", "aug": "augusti",
+    "sep": "september", "okt": "oktober", "nov": "november", "dec": "december"
   };
 
   let events = [];
@@ -77,12 +78,28 @@
   function formatDateRange(title) {
     const match = title.match(/^(\d{1,2})\s*(\w{3})(?:\s*-\s*(\d{1,2})\s*(\w{3}))?/i);
     if (match) {
-      const start = `${match[1]}/${swedishMonths[match[2].toLowerCase()]}`;
-      if (match[3] && match[4]) {
-        return `${start} - ${match[3]}/${swedishMonths[match[4].toLowerCase()]}`;
+      const startDay = parseInt(match[1], 10);
+      const startMonthKey = match[2].toLowerCase();
+      const startMonth = fullMonthNames[startMonthKey];
+
+      if (!startMonth) return '';
+
+      const endDayStr = match[3];
+      const endMonthKey = match[4]?.toLowerCase();
+      const endMonth = endMonthKey ? fullMonthNames[endMonthKey] : null;
+
+      if (endDayStr && endMonth) {
+        const endDay = parseInt(endDayStr, 10);
+        if (startMonthKey === endMonthKey) {
+          return `${startDay}–${endDay} ${startMonth}`;
+        } else {
+          return `${startDay} ${startMonth} – ${endDay} ${endMonth}`;
+        }
       }
-      return start;
+
+      return `${startDay} ${startMonth}`;
     }
+
     return '';
   }
 
@@ -106,7 +123,7 @@
         return { title, date, location, image };
       });
 
-      currentIndex = 0; // 👈 Starta från början vid varje ny laddning
+      currentIndex = 0;
 
     } catch (err) {
       console.error("Fel vid hämtning:", err);
@@ -133,10 +150,9 @@
     currentIndex = (currentIndex + 1) % events.length;
   }
 
-  // Starta direkt
   fetchRSS();
-  setInterval(fetchRSS, 60000);    // Hämta nytt flöde varje minut
-  setInterval(showNext, 10000);    // Visa nytt event var 10:e sekund
+  setInterval(fetchRSS, 60000);    // uppdatera flödet varje minut
+  setInterval(showNext, 10000);    // byt event var 10:e sekund
 </script>
 
 </body>
