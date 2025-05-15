@@ -28,6 +28,7 @@
             height: 100vh;
             background-size: cover;
             background-position: center;
+            background-repeat: no-repeat;
             transition: opacity 1s ease-in-out;
             opacity: 0;
         }
@@ -108,20 +109,20 @@
 
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
-                let title = item.getElementsByTagName("title")[0]?.textContent || "";
-                const link = item.getElementsByTagName("link")[0]?.textContent || "";
+                let rawTitle = item.getElementsByTagName("title")[0]?.textContent || "";
                 const location = item.getElementsByTagName("category")[0]?.textContent || "";
-                const img = extractImage(item);
-                const date = formatDateRange(title);
+                const image = extractImage(item);
+                const date = formatDateRange(rawTitle);
 
-                title = title.replace(/^(\d{1,2}\s\w{3}(?:\s?-\s?\d{1,2}\s?\w{3})?)\s*/, '').trim();
+                // Rensa titel från datum och kommatecken
+                let cleanTitle = rawTitle.replace(/^(\d{1,2}\s\w{3}(?:\s?-\s?\d{1,2}\s?\w{3})?)\s*/, '');
+                cleanTitle = cleanTitle.replace(/^,/, '').trim();
 
                 events.push({
-                    title: title,
+                    title: cleanTitle,
                     date: date,
                     location: location,
-                    image: img,
-                    link: link
+                    image: image
                 });
             }
 
@@ -150,7 +151,6 @@
         wrapper.appendChild(container);
 
         setTimeout(() => container.classList.add("visible"), 50);
-
         currentIndex = (currentIndex + 1) % events.length;
     }
 
