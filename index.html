@@ -73,7 +73,6 @@
 
   let events = [];
   let currentIndex = 0;
-  let interval;
 
   function formatDateRange(title) {
     const match = title.match(/^(\d{1,2})\s*(\w{3})(?:\s*-\s*(\d{1,2})\s*(\w{3}))?/i);
@@ -107,8 +106,8 @@
         return { title, date, location, image };
       });
 
-      showNext();
-      if (!interval) interval = setInterval(showNext, 10000);
+      currentIndex = 0; // 👈 Starta från början vid varje ny laddning
+
     } catch (err) {
       console.error("Fel vid hämtning:", err);
     }
@@ -134,9 +133,10 @@
     currentIndex = (currentIndex + 1) % events.length;
   }
 
+  // Starta direkt
   fetchRSS();
-setInterval(fetchRSS, 60000); // Hämta nytt flöde varje minut
-setInterval(showNext, 10000); // Visa nytt event var 10:e sekund
+  setInterval(fetchRSS, 60000);    // Hämta nytt flöde varje minut
+  setInterval(showNext, 10000);    // Visa nytt event var 10:e sekund
 </script>
 
 </body>
