@@ -1,161 +1,141 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Evenemangsvisning</title>
-    <style>
-        @font-face {
-            font-family: 'DINPro';
-            src: url('dinpro-regular.woff2') format('woff2');
-            font-weight: normal;
-            font-style: normal;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Evenemangsvisning</title>
+  <style>
+    @font-face {
+      font-family: 'DINPro';
+      src: url('dinpro-regular.woff2') format('woff2');
+    }
 
-        html, body {
-            margin: 0;
-            padding: 0;
-            background-color: black;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: 'DINPro', sans-serif;
-        }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: black;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'DINPro', sans-serif;
+    }
 
-        .event-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            transition: opacity 1s ease-in-out;
-            opacity: 0;
-        }
+    .event-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transition: opacity 1s ease-in-out;
+      opacity: 0;
+    }
 
-        .event-container.visible {
-            opacity: 1;
-        }
+    .event-container.visible {
+      opacity: 1;
+    }
 
-        .info-box {
-            position: absolute;
-            bottom: 40px;
-            right: 40px;
-            background-color: rgba(0, 0, 0, 0.75);
-            color: white;
-            padding: 20px;
-            max-width: 40vw;
-        }
+    .info-box {
+      position: absolute;
+      bottom: 40px;
+      right: 40px;
+      background-color: rgba(0, 0, 0, 0.75);
+      color: white;
+      padding: 20px;
+      max-width: 40vw;
+    }
 
-        .info-box h1 {
-            font-size: 36px;
-            margin: 0 0 10px 0;
-        }
+    .info-box h1 {
+      font-size: 36px;
+      margin: 0 0 10px 0;
+    }
 
-        .info-box p {
-            margin: 0;
-            font-size: 22px;
-        }
-    </style>
+    .info-box p {
+      margin: 0;
+      font-size: 22px;
+    }
+  </style>
 </head>
 <body>
 
 <div id="eventWrapper"></div>
 
 <script>
-    const wrapper = document.getElementById("eventWrapper");
+  const wrapper = document.getElementById("eventWrapper");
 
-    const rssUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(
-        'https://visiteskilstuna.se/rest-api/rssService/getRssFeed?portletId=12.5b899160171ac5273c72ad9f&pageId=2.369be3c31580a19562d1977e'
-    );
+  const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' +
+    encodeURIComponent('https://visiteskilstuna.se/rest-api/rssService/getRssFeed?portletId=12.5b899160171ac5273c72ad9f&pageId=2.369be3c31580a19562d1977e');
 
-    const monthMap = {
-        "jan": "01", "feb": "02", "mar": "03", "apr": "04", "maj": "05", "jun": "06",
-        "jul": "07", "aug": "08", "sep": "09", "okt": "10", "nov": "11", "dec": "12"
-    };
+  const swedishMonths = {
+    "jan": "01", "feb": "02", "mar": "03", "apr": "04", "maj": "05", "jun": "06",
+    "jul": "07", "aug": "08", "sep": "09", "okt": "10", "nov": "11", "dec": "12"
+  };
 
-    let events = [];
-    let currentIndex = 0;
-    let interval;
+  let events = [];
+  let currentIndex = 0;
+  let interval;
 
-    function formatDateRange(title) {
-        const match = title.match(/^(\d{1,2})\s(\w{3})(?:\s?-\s?(\d{1,2})\s?(\w{3}))?/i);
-        if (match) {
-            const start = `${match[1]}/${monthMap[match[2].toLowerCase()]}`;
-            if (match[3] && match[4]) {
-                const end = `${match[3]}/${monthMap[match[4].toLowerCase()]}`;
-                return `${start} - ${end}`;
-            }
-            return start;
-        }
-        return '';
+  function formatDateRange(title) {
+    const match = title.match(/^(\d{1,2})\s*(\w{3})(?:\s*-\s*(\d{1,2})\s*(\w{3}))?/i);
+    if (match) {
+      const start = `${match[1]}/${swedishMonths[match[2].toLowerCase()]}`;
+      if (match[3] && match[4]) {
+        return `${start} - ${match[3]}/${swedishMonths[match[4].toLowerCase()]}`;
+      }
+      return start;
     }
+    return '';
+  }
 
-    function extractImage(item) {
-        const desc = item.getElementsByTagName("description")[0]?.textContent || "";
-        const match = desc.match(/<img[^>]+src="([^">]+)"/i);
-        return match ? match[1] : "";
+  function removeDateFromTitle(title) {
+    return title.replace(/^(\d{1,2}\s*\w{3}(?:\s*-\s*\d{1,2}\s*\w{3})?)\s*[,:-]?\s*/i, '').trim();
+  }
+
+  async function fetchRSS() {
+    try {
+      const res = await fetch(rssUrl);
+      const data = await res.json();
+      const items = data.items || [];
+
+      events = items.map(item => {
+        const rawTitle = item.title || '';
+        const title = removeDateFromTitle(rawTitle);
+        const date = formatDateRange(rawTitle);
+        const location = item.description?.replace(/<[^>]*>/g, '').trim() || '';
+        const image = item.enclosure?.link || item.enclosure?.url || '';
+
+        return { title, date, location, image };
+      });
+
+      showNext();
+      if (!interval) interval = setInterval(showNext, 10000);
+    } catch (err) {
+      console.error("Fel vid hämtning:", err);
     }
+  }
 
-    async function fetchRSS() {
-        try {
-            const res = await fetch(rssUrl);
-            const data = await res.json();
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(data.contents, "text/xml");
-            const items = xmlDoc.getElementsByTagName("item");
+  function showNext() {
+    if (events.length === 0) return;
 
-            events = [];
+    const e = events[currentIndex];
+    const container = document.createElement("div");
+    container.className = "event-container";
+    container.style.backgroundImage = `url('${e.image}')`;
 
-            for (let i = 0; i < items.length; i++) {
-                const item = items[i];
-                let rawTitle = item.getElementsByTagName("title")[0]?.textContent || "";
-                const location = item.getElementsByTagName("category")[0]?.textContent || "";
-                const image = extractImage(item);
-                const date = formatDateRange(rawTitle);
+    const box = document.createElement("div");
+    box.className = "info-box";
+    box.innerHTML = `<h1>${e.title}</h1><p>${e.date}</p><p>${e.location}</p>`;
 
-                // Rensa titel från datum och kommatecken
-                let cleanTitle = rawTitle.replace(/^(\d{1,2}\s\w{3}(?:\s?-\s?\d{1,2}\s?\w{3})?)\s*/, '');
-                cleanTitle = cleanTitle.replace(/^,/, '').trim();
+    container.appendChild(box);
+    wrapper.innerHTML = "";
+    wrapper.appendChild(container);
 
-                events.push({
-                    title: cleanTitle,
-                    date: date,
-                    location: location,
-                    image: image
-                });
-            }
+    setTimeout(() => container.classList.add("visible"), 50);
+    currentIndex = (currentIndex + 1) % events.length;
+  }
 
-            showNext();
-            if (!interval) interval = setInterval(showNext, 10000);
-
-        } catch (err) {
-            console.error("Fel vid hämtning av RSS:", err);
-        }
-    }
-
-    function showNext() {
-        if (events.length === 0) return;
-
-        const e = events[currentIndex];
-        const container = document.createElement("div");
-        container.className = "event-container";
-        container.style.backgroundImage = `url('${e.image}')`;
-
-        const box = document.createElement("div");
-        box.className = "info-box";
-        box.innerHTML = `<h1>${e.title}</h1><p>${e.date}</p><p>${e.location}</p>`;
-
-        container.appendChild(box);
-        wrapper.innerHTML = "";
-        wrapper.appendChild(container);
-
-        setTimeout(() => container.classList.add("visible"), 50);
-        currentIndex = (currentIndex + 1) % events.length;
-    }
-
-    fetchRSS();
-    setInterval(fetchRSS, 60000);
+  fetchRSS();
+  setInterval(fetchRSS, 60000);
 </script>
 
 </body>
