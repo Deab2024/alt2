@@ -20,6 +20,30 @@
       font-family: 'DINPro', sans-serif;
     }
 
+    #loadingScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: black;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      z-index: 10;
+    }
+
+    #loadingScreen img {
+      position: absolute;
+      bottom: 30px;
+      left: 30px;
+      height: 80px;
+      width: auto;
+    }
+
     .event-container {
       position: relative;
       width: 100vw;
@@ -58,6 +82,12 @@
 </head>
 <body>
 
+<!-- Förhandsvisning innan event laddas -->
+<div id="loadingScreen">
+  Kommande evenemang i Eskilstuna
+  <img src="logo.png" alt="Eskilstuna logotyp">
+</div>
+
 <div id="eventWrapper"></div>
 
 <script>
@@ -74,6 +104,7 @@
 
   let events = [];
   let currentIndex = 0;
+  let loadingScreenVisible = true;
 
   function formatDateRange(title) {
     const match = title.match(/^(\d{1,2})\s*(\w{3})(?:\s*-\s*(\d{1,2})\s*(\w{3}))?/i);
@@ -81,7 +112,6 @@
       const startDay = parseInt(match[1], 10);
       const startMonthKey = match[2].toLowerCase();
       const startMonth = fullMonthNames[startMonthKey];
-
       if (!startMonth) return '';
 
       const endDayStr = match[3];
@@ -99,7 +129,6 @@
 
       return `${startDay} ${startMonth}`;
     }
-
     return '';
   }
 
@@ -119,7 +148,6 @@
         const date = formatDateRange(rawTitle);
         const location = item.description?.replace(/<[^>]*>/g, '').trim() || '';
         const image = item.enclosure?.link || item.enclosure?.url || '';
-
         return { title, date, location, image };
       });
 
@@ -132,6 +160,13 @@
 
   function showNext() {
     if (events.length === 0) return;
+
+    // Ta bort loading-screen första gången
+    if (loadingScreenVisible) {
+      const screen = document.getElementById("loadingScreen");
+      if (screen) screen.remove();
+      loadingScreenVisible = false;
+    }
 
     const e = events[currentIndex];
     const container = document.createElement("div");
@@ -151,8 +186,8 @@
   }
 
   fetchRSS();
-  setInterval(fetchRSS, 60000);    // uppdatera flödet varje minut
-  setInterval(showNext, 10000);    // byt event var 10:e sekund
+  setInterval(fetchRSS, 60000);
+  setInterval(showNext, 10000);
 </script>
 
 </body>
