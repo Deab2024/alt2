@@ -34,6 +34,7 @@
       justify-content: center;
       font-size: 2.5rem;
       z-index: 10;
+      transition: opacity 1s ease-in-out;
     }
 
     #loadingScreen img {
@@ -42,6 +43,15 @@
       left: 30px;
       height: 80px;
       width: auto;
+    }
+
+    @keyframes fadeOut {
+      0%   { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    .fade-out {
+      animation: fadeOut 1s ease-in-out forwards;
     }
 
     .event-container {
@@ -82,12 +92,13 @@
 </head>
 <body>
 
-<!-- Förhandsvisning innan event laddas -->
+<!-- Startvisning -->
 <div id="loadingScreen">
   Kommande evenemang i Eskilstuna
   <img src="logo.png" alt="Eskilstuna logotyp">
 </div>
 
+<!-- Här visas eventen -->
 <div id="eventWrapper"></div>
 
 <script>
@@ -129,6 +140,7 @@
 
       return `${startDay} ${startMonth}`;
     }
+
     return '';
   }
 
@@ -161,10 +173,13 @@
   function showNext() {
     if (events.length === 0) return;
 
-    // Ta bort loading-screen första gången
+    // Fade ut och ta bort startsidan
     if (loadingScreenVisible) {
       const screen = document.getElementById("loadingScreen");
-      if (screen) screen.remove();
+      if (screen) {
+        screen.classList.add("fade-out");
+        setTimeout(() => screen.remove(), 1000);
+      }
       loadingScreenVisible = false;
     }
 
