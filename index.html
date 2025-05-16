@@ -32,7 +32,9 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 2.5rem;
+      font-size: 5vw; /* Större, responsiv text */
+      text-align: center;
+      padding: 0 1rem;
       z-index: 10;
       transition: opacity 1s ease-in-out;
     }
@@ -92,13 +94,13 @@
 </head>
 <body>
 
-<!-- Startvisning -->
+<!-- Startskärm med text + logga -->
 <div id="loadingScreen">
   Kommande evenemang i Eskilstuna
   <img src="logo.png" alt="Eskilstuna logotyp">
 </div>
 
-<!-- Här visas eventen -->
+<!-- Här visas evenemangen -->
 <div id="eventWrapper"></div>
 
 <script>
@@ -173,7 +175,6 @@
   function showNext() {
     if (events.length === 0) return;
 
-    // Fade ut och ta bort startsidan
     if (loadingScreenVisible) {
       const screen = document.getElementById("loadingScreen");
       if (screen) {
@@ -201,8 +202,8 @@
   }
 
   fetchRSS();
-  setInterval(fetchRSS, 60000);
-  setInterval(showNext, 10000);
+  setInterval(fetchRSS, 60000);    // hämta nytt flöde varje minut
+  setInterval(showNext, 10000);    // visa nytt event var 10:e sekund
 </script>
 
 </body>
